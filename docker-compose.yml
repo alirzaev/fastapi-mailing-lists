@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+  redis:
+    image: redis:6-alpine
+    ports:
+      - '6379:6379'
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - '1025:1025'
+      - '8025:8025'
+  prod-db:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_PASSWORD: postgres
+  prod-redis:
+    image: redis:6-alpine
+  app:
+    build:
+      context: '.'
+      dockerfile: Dockerfile
+    depends_on:
+      - mailhog
+      - prod-db
+      - prod-redis
+    environment:
+      DEBUG: 0
+      REDIS_URL: 'redis://prod-redis/0'
+      SQLALCHEMY_DATABASE_URL: 'postgresql+asyncpg://postgres:postgres@prod-db/postgres'
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_TLS: 0
+      FIRST_SUPERUSER: 'admin@example.com'
+      FIRST_SUPERUSER_PASSWORD: 'password'
+    ports:
+      - '8000:80'
+    command: ["./docker/wait-for-it.sh", "prod-db:5432", "--", "./docker/runserver.sh"]
