@@ -13,3 +13,11 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
 
     hashed_password = Column(String, nullable=False)
+
+
+class SubscriptionEmail(Base):
+    __tablename__ = 'subscription_email'
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    email = Column(String, unique=True, index=True, nullable=False)
