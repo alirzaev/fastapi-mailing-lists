@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -20,3 +20,8 @@ async def create(db: AsyncSession, subscription_email_in: SubscriptionEmailCreat
 async def get_by_email(db: AsyncSession, email: str) -> Optional[SubscriptionEmail]:
     result = await db.execute(select(SubscriptionEmail).filter(SubscriptionEmail.email == email))
     return result.scalars().first()
+
+
+async def get_all(db: AsyncSession) -> List[SubscriptionEmail]:
+    result = await db.execute(select(SubscriptionEmail))
+    return result.scalars()
