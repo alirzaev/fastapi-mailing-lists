@@ -9,7 +9,7 @@ An example of FastAPI backend with a mailing lists system
 ```shell script
 poetry install
 
-docker-compose up -d db redis
+docker-compose up -d db redis mailhog
 alembic upgrade head
 # initial data (first superuser)
 python -m application.initial_data
