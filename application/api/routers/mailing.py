@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
 
@@ -39,7 +40,7 @@ async def send_email(
     return Response(status_code=204)
 
 
-@router.get('/unsubscribe/{token}', status_code=200)
+@router.get('/unsubscribe/{token}', status_code=200, response_class=HTMLResponse)
 async def unsubscribe(
         token: str = Path(...),
         db: AsyncSession = Depends(get_db)
@@ -48,12 +49,10 @@ async def unsubscribe(
 
     if email is not None:
         await crud.subscription_email.remove(db, email)
-        content = render_template('unsubscribed.html',
-                                  title='Unsubscribed',
-                                  message='You have been successfully unsubscribed from the mailing list')
-        return Response(content=content, status_code=200, media_type='text/html')
+        return render_template('unsubscribed.html',
+                               title='Unsubscribed',
+                               message='You have been successfully unsubscribed from the mailing list')
     else:
-        content = render_template('unsubscribed.html',
-                                  title='Something went wrong',
-                                  message='Failed to unsubscribe')
-        return Response(content=content, status_code=200, media_type='text/html')
+        return render_template('unsubscribed.html',
+                               title='Something went wrong',
+                               message='Failed to unsubscribe')
