@@ -1,10 +1,12 @@
 from typing import Optional, Dict, Any
 
-from pydantic import BaseSettings, validator, EmailStr
+from pydantic import BaseSettings, validator, EmailStr, AnyHttpUrl
 
 
 class Config(BaseSettings):
     DEBUG: bool = True
+
+    SERVER_HOST: AnyHttpUrl = 'http://localhost:8000'
 
     SQLALCHEMY_DATABASE_URL: str = 'postgresql+asyncpg://postgres:postgres@localhost:5432/postgres'
 

@@ -25,3 +25,13 @@ async def get_by_email(db: AsyncSession, email: str) -> Optional[SubscriptionEma
 async def get_all(db: AsyncSession) -> List[SubscriptionEmail]:
     result = await db.execute(select(SubscriptionEmail))
     return result.scalars()
+
+
+async def remove(db: AsyncSession, email: str) -> Optional[SubscriptionEmail]:
+    subscription_email = await get_by_email(db, email)
+
+    if subscription_email is not None:
+        await db.delete(subscription_email)
+        await db.commit()
+
+    return subscription_email

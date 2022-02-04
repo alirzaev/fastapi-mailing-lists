@@ -1,12 +1,13 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import Response
 
 from application import crud
 from application import schemas
 from application.api.dependencies import get_db, get_current_user
+from application.core.security import decode_unsubscribe_token
 from application.database.models import User
-from application.utils import send_email_to_mailing_list
+from application.utils import send_email_to_mailing_list, render_template
 
 router = APIRouter(tags=['mailing'])
 
@@ -36,3 +37,23 @@ async def send_email(
 ):
     background_tasks.add_task(send_email_to_mailing_list, email_content)
     return Response(status_code=204)
+
+
+@router.get('/unsubscribe/{token}', status_code=200)
+async def unsubscribe(
+        token: str = Path(...),
+        db: AsyncSession = Depends(get_db)
+):
+    email = decode_unsubscribe_token(token)
+
+    if email is not None:
+        await crud.subscription_email.remove(db, email)
+        content = render_template('unsubscribed.html',
+                                  title='Unsubscribed',
+                                  message='You have been successfully unsubscribed from the mailing list')
+        return Response(content=content, status_code=200, media_type='text/html')
+    else:
+        content = render_template('unsubscribed.html',
+                                  title='Something went wrong',
+                                  message='Failed to unsubscribe')
+        return Response(content=content, status_code=200, media_type='text/html')

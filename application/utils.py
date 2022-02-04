@@ -1,11 +1,16 @@
 import logging
+from pathlib import Path
 from typing import Dict, Any
 
 import emails
+from emails.template import JinjaTemplate
 
 from application import schemas, crud
 from application.core.config import config
+from application.core.security import create_unsubscribe_token
 from application.database.session import AsyncSessionLocal
+
+_TEMPLATES_DIR = Path(__file__).parent / 'templates'
 
 
 def send_email(
@@ -31,9 +36,23 @@ def send_email(
     logging.info(f'send email result: {response}')
 
 
+def render_template(template_name, **context):
+    template_str = (_TEMPLATES_DIR / template_name).read_text()
+
+    return JinjaTemplate(template_str).render(**context)
+
+
 async def send_email_to_mailing_list(email_content: schemas.EmailContent):
     async with AsyncSessionLocal() as db:
         mailing_list = await crud.subscription_email.get_all(db)
 
+        path = _TEMPLATES_DIR / 'email' / 'mailing_list_email.html'
+        template = JinjaTemplate(path.read_text())
+
         for subscription in mailing_list:
-            send_email(subscription.email, email_content.subject, email_content.content)
+            token = create_unsubscribe_token(subscription.email)
+            content = template.render(
+                content=email_content.content,
+                unsubscribe_link=f'{config.SERVER_HOST}/mailing/unsubscribe/{token}'
+            )
+            send_email(subscription.email, email_content.subject, content)
